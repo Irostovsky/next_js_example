@@ -5,6 +5,9 @@ or application architecture.
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+Whenever working with any third-party library or something similar, you MUST look up the official documentation to ensure that you're working with up-to-date information.
+Use the DocsExplorer subagent for efficient documentation lookup.
+
 ## Project Overview
 
 A note-taking web app where authenticated users can create, edit, delete, and publicly share rich-text notes. See `SPEC.MD` for the full technical specification.
