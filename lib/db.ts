@@ -1,4 +1,4 @@
-import { Database } from "bun:sqlite";
+import { Database, type SQLQueryBindings } from "bun:sqlite";
 import { mkdirSync } from "fs";
 import { dirname } from "path";
 
@@ -33,14 +33,14 @@ export function getDb(): Database {
   return db;
 }
 
-export function query<T>(sql: string, ...params: unknown[]): T[] {
+export function query<T>(sql: string, ...params: SQLQueryBindings[]): T[] {
   return db.query(sql).all(...params) as T[];
 }
 
-export function get<T>(sql: string, ...params: unknown[]): T | undefined {
+export function get<T>(sql: string, ...params: SQLQueryBindings[]): T | undefined {
   return db.query(sql).get(...params) as T | undefined;
 }
 
-export function run(sql: string, ...params: unknown[]) {
+export function run(sql: string, ...params: SQLQueryBindings[]) {
   return db.query(sql).run(...params);
 }

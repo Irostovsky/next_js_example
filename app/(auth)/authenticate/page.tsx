@@ -1,8 +1,12 @@
-export default function Authenticate() {
+import { Suspense } from "react";
+import { AuthForm } from "./auth-form";
+
+export default function AuthenticatePage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center">
-      <h1 className="text-4xl font-bold">Authenticate</h1>
-      <p className="mt-4 text-lg text-gray-600">Login or create an account.</p>
+      <Suspense>
+        <AuthForm />
+      </Suspense>
     </div>
   );
 }
