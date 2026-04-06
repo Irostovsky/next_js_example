@@ -41,7 +41,7 @@ export function AuthForm() {
     setLoading(true);
 
     const { error } = isSignUp
-      ? await signUp.email({ email, password, name: "" })
+      ? await signUp.email({ email, password, name: email.split("@")[0] })
       : await signIn.email({ email, password });
 
     setLoading(false);

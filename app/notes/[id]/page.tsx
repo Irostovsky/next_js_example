@@ -1,8 +1,14 @@
+import { NoteEditor } from "@/components/note-editor";
 import { auth } from "@/lib/auth";
+import { getNoteById } from "@/lib/notes";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
-export default async function NotePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function NotePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -12,11 +18,21 @@ export default async function NotePage({ params }: { params: Promise<{ id: strin
   }
 
   const { id } = await params;
+  const note = getNoteById(session.user.id, id);
+
+  if (!note) {
+    notFound();
+  }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center">
-      <h1 className="text-4xl font-bold">Note Editor</h1>
-      <p className="mt-4 text-lg text-gray-600">Editing note: {id}</p>
-    </div>
+    <main className="mx-auto max-w-2xl px-6 py-10">
+      <NoteEditor
+        noteId={note.id}
+        initialTitle={note.title}
+        initialContent={note.content_json}
+        initialIsPublic={note.is_public === 1}
+        initialPublicSlug={note.public_slug}
+      />
+    </main>
   );
 }

@@ -1,6 +1,12 @@
 "use client";
 
-import { createNoteAction, type CreateNoteState } from "@/lib/actions/notes";
+import {
+  createNoteAction,
+  updateNoteAction,
+  deleteNoteAction,
+  toggleShareAction,
+  type NoteActionState,
+} from "@/lib/actions/notes";
 import {
   type Editor,
   EditorContent,
@@ -8,16 +14,47 @@ import {
   useEditorState,
 } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useActionState } from "react";
+import { useActionState, useState, useTransition } from "react";
 
-export function NoteEditor() {
+type NoteEditorProps = {
+  noteId?: string;
+  initialTitle?: string;
+  initialContent?: string;
+  initialIsPublic?: boolean;
+  initialPublicSlug?: string | null;
+};
+
+export function NoteEditor({
+  noteId,
+  initialTitle = "",
+  initialContent,
+  initialIsPublic = false,
+  initialPublicSlug = null,
+}: NoteEditorProps) {
+  const isEditing = !!noteId;
+
+  const action = isEditing
+    ? updateNoteAction.bind(null, noteId)
+    : createNoteAction;
+
   const [state, formAction, isPending] = useActionState<
-    CreateNoteState,
+    NoteActionState,
     FormData
-  >(createNoteAction, {});
+  >(action, {});
+
+  const parsedContent = initialContent
+    ? (() => {
+        try {
+          return JSON.parse(initialContent);
+        } catch {
+          return undefined;
+        }
+      })()
+    : undefined;
 
   const editor = useEditor({
     extensions: [StarterKit],
+    content: parsedContent,
     immediatelyRender: false,
     editorProps: {
       attributes: {
@@ -35,44 +72,138 @@ export function NoteEditor() {
   }
 
   return (
-    <form action={handleSubmit} className="space-y-4">
-      <div>
-        <label htmlFor="title" className="block text-sm font-medium">
-          Title
-        </label>
-        <input
-          id="title"
-          name="title"
-          type="text"
-          required
-          className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
-          placeholder="Note title"
-        />
-        {state.errors?.title && (
-          <p className="mt-1 text-sm text-red-600">{state.errors.title}</p>
-        )}
-      </div>
+    <div className="space-y-6">
+      <form action={handleSubmit} className="space-y-4">
+        <div>
+          <label htmlFor="title" className="block text-sm font-medium">
+            Title
+          </label>
+          <input
+            id="title"
+            name="title"
+            type="text"
+            required
+            defaultValue={initialTitle}
+            className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
+            placeholder="Note title"
+          />
+          {state.errors?.title && (
+            <p className="mt-1 text-sm text-red-600">{state.errors.title}</p>
+          )}
+        </div>
 
-      <div>
-        <label className="block text-sm font-medium">Content</label>
-        <Toolbar editor={editor} />
-        <EditorContent editor={editor} />
-        <input type="hidden" name="contentJson" />
-        {state.errors?.contentJson && (
-          <p className="mt-1 text-sm text-red-600">
-            {state.errors.contentJson}
-          </p>
-        )}
-      </div>
+        <div>
+          <label className="block text-sm font-medium">Content</label>
+          <Toolbar editor={editor} />
+          <EditorContent editor={editor} />
+          <input type="hidden" name="contentJson" />
+          {state.errors?.contentJson && (
+            <p className="mt-1 text-sm text-red-600">
+              {state.errors.contentJson}
+            </p>
+          )}
+        </div>
 
+        <div className="flex items-center gap-3">
+          <button
+            type="submit"
+            disabled={isPending}
+            className="rounded bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+          >
+            {isPending
+              ? isEditing
+                ? "Saving..."
+                : "Creating..."
+              : isEditing
+                ? "Save"
+                : "Create Note"}
+          </button>
+          {state.success && (
+            <span className="text-sm text-green-600">Saved!</span>
+          )}
+        </div>
+      </form>
+
+      {isEditing && (
+        <div className="flex items-center gap-4 border-t pt-4">
+          <ShareToggle
+            noteId={noteId}
+            initialIsPublic={initialIsPublic}
+            initialPublicSlug={initialPublicSlug}
+          />
+          <DeleteButton noteId={noteId} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ShareToggle({
+  noteId,
+  initialIsPublic,
+  initialPublicSlug,
+}: {
+  noteId: string;
+  initialIsPublic: boolean;
+  initialPublicSlug: string | null;
+}) {
+  const [isPublic, setIsPublic] = useState(initialIsPublic);
+  const [publicSlug, setPublicSlug] = useState(initialPublicSlug);
+  const [pending, startTransition] = useTransition();
+
+  function handleToggle() {
+    const newValue = !isPublic;
+    startTransition(async () => {
+      const result = await toggleShareAction(noteId, newValue);
+      if ("error" in result) return;
+      setIsPublic(result.isPublic);
+      setPublicSlug(result.publicSlug);
+    });
+  }
+
+  const publicUrl =
+    isPublic && publicSlug
+      ? `${typeof window !== "undefined" ? window.location.origin : ""}/p/${publicSlug}`
+      : null;
+
+  return (
+    <div className="flex flex-col gap-1">
       <button
-        type="submit"
-        disabled={isPending}
-        className="rounded bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+        type="button"
+        onClick={handleToggle}
+        disabled={pending}
+        className="rounded border px-3 py-1 text-sm hover:bg-gray-100 disabled:opacity-50"
       >
-        {isPending ? "Creating..." : "Create Note"}
+        {pending
+          ? "Updating..."
+          : isPublic
+            ? "Unshare"
+            : "Share publicly"}
       </button>
-    </form>
+      {publicUrl && (
+        <span className="text-xs text-gray-500 break-all">{publicUrl}</span>
+      )}
+    </div>
+  );
+}
+
+function DeleteButton({ noteId }: { noteId: string }) {
+  const [pending, startTransition] = useTransition();
+
+  function handleDelete() {
+    if (!confirm("Delete this note? This cannot be undone.")) return;
+    startTransition(() => deleteNoteAction(noteId));
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleDelete}
+      disabled={pending}
+      className="rounded border border-red-200 px-3 py-1 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+    >
+      {pending ? "Deleting..." : "Delete"}
+    </button>
   );
 }
 
@@ -91,7 +222,7 @@ function Toolbar({ editor }: { editor: Editor | null }) {
     }),
   });
 
-  if (!editor) return null;
+  if (!editor || !state) return null;
 
   const buttonClass = (active: boolean) =>
     `rounded px-2 py-1 text-sm ${active ? "bg-gray-200 font-semibold" : "hover:bg-gray-100"}`;
