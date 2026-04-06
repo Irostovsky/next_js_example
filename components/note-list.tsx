@@ -15,7 +15,7 @@ export function NoteList({ notes }: { notes: NoteListItem[] }) {
       {notes.map((note) => (
         <li key={note.id}>
           <Link
-            href={`/notes/${note.id}`}
+            href={`/notes/${note.id}/view`}
             className="block rounded border border-gray-200 px-4 py-3 transition-colors hover:border-gray-400"
           >
             <h2 className="font-medium">{note.title}</h2>
