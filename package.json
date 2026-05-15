@@ -6,7 +6,9 @@
     "dev": "bun run --bun next dev",
     "build": "bun run --bun next build",
     "start": "bun run --bun next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "bun run --bun vitest run",
+    "test:watch": "bun run --bun vitest"
   },
   "dependencies": {
     "@tiptap/pm": "^3.20.4",
@@ -24,10 +26,12 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.1.6",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.6"
   },
   "ignoreScripts": [
     "sharp",

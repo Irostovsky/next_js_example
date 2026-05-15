@@ -38,7 +38,7 @@ export function query<T>(sql: string, ...params: SQLQueryBindings[]): T[] {
 }
 
 export function get<T>(sql: string, ...params: SQLQueryBindings[]): T | undefined {
-  return db.query(sql).get(...params) as T | undefined;
+  return (db.query(sql).get(...params) as T | null) ?? undefined;
 }
 
 export function run(sql: string, ...params: SQLQueryBindings[]) {
