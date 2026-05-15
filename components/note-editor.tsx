@@ -14,7 +14,7 @@ import {
   useEditorState,
 } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useActionState, useState, useTransition } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 
 type NoteEditorProps = {
   noteId?: string;
@@ -149,7 +149,12 @@ function ShareToggle({
 }) {
   const [isPublic, setIsPublic] = useState(initialIsPublic);
   const [publicSlug, setPublicSlug] = useState(initialPublicSlug);
+  const [origin, setOrigin] = useState("");
   const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
 
   function handleToggle() {
     const newValue = !isPublic;
@@ -162,9 +167,7 @@ function ShareToggle({
   }
 
   const publicUrl =
-    isPublic && publicSlug
-      ? `${typeof window !== "undefined" ? window.location.origin : ""}/p/${publicSlug}`
-      : null;
+    isPublic && publicSlug ? `${origin}/p/${publicSlug}` : null;
 
   return (
     <div className="flex flex-col gap-1">
